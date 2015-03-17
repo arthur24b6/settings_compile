@@ -45,37 +45,25 @@ class Compiler
 
     function write($path)
     {
+        $settings = array();
         $this->settingsPreprocess();
-        $settings = "<?php\n";
+        $settings[] = "<?php";
         foreach ($this->config['settings'] as $settingName => $settingValue) {
-          $setting = "\$$settingName=";
-          $setting .= is_array($settingValue)
-            ? $this->writeArray($settingValue)
-            : $this->quote($settingValue);
-          $settings .= "$setting;";
+            $setting = "\$$settingName = ";
+            $setting .= is_array($settingValue)
+              ? var_export($settingValue, true)
+              : $this->quote($settingValue);
+              $settings[] = "$setting;";
         }
         foreach ($this->config['ini'] as $iniDirective => $iniValue) {
-            $settings .= "ini_set({$this->quote($iniDirective)}, {$this->quote($iniValue)});";
+            $settings[] = "ini_set({$this->quote($iniDirective)}, {$this->quote($iniValue)});";
         }
         foreach ($this->config['include'] as $type => $includes) {
             foreach ($includes as $includePath) {
-                $settings .= "$type {$this->quote($includePath)};";
+                $settings[] = "$type {$this->quote($includePath)};";
             }
         }
-        file_put_contents($path, $settings);
-    }
-
-    function writeArray($array)
-    {
-        $arrayString = 'array(';
-        foreach ($array as $key => $value) {
-            $arrayString .= $this->quote($key)
-                . ' => '
-                . $this->quote($value)
-                . ',';
-        }
-        $arrayString .= ')';
-        return $arrayString;
+        file_put_contents($path, implode("\n\n", $settings));
     }
 
     function quote($value)
